@@ -39,6 +39,7 @@ public class MainActivity extends AppCompatActivity implements InitCH340.IUsbPer
     private static final String ACTION_USB_PERMISSION = "com.linc.USB_PERMISSION";
     private byte[] readBuffer;
 
+    private TextView data0;
     private TextView data1;
     private TextView data2;
     private TextView data3;
@@ -84,6 +85,7 @@ public class MainActivity extends AppCompatActivity implements InitCH340.IUsbPer
         recvText.setGravity(Gravity.BOTTOM);
         recvText.setMovementMethod(ScrollingMovementMethod.getInstance());
 
+        data0=findViewById(R.id.data0);
         data1=findViewById(R.id.data1);
         data2=findViewById(R.id.data2);
         data3=findViewById(R.id.data3);
@@ -228,18 +230,29 @@ public class MainActivity extends AppCompatActivity implements InitCH340.IUsbPer
 
     @Override
     public void onReadHex(byte[] hex, final int length) {
-//        final byte[] header=new byte[4];
-//        header[0]=hex[0];
-//        header[1]=hex[1];
-//        header[2]=hex[2];
-//        header[3]=hex[3];
-//        final String headerString = CH340Util.bytesToHexString(header, 4);
-        if(length!=140){
+        final byte[] head=new byte[4];
+        head[0]=hex[0];
+        head[1]=hex[1];
+        head[2]=hex[2];
+        head[3]=hex[3];
+        final String headerString = CH340Util.bytesToHexString(head, 4);
+//        final String checkhead="aa55aa45";
+
+        if(length!=140) {
             return;
         }
-//        if(headerString!="aa55aa56"){
-//            return;
-//        }
+        if(head[0]!=-86){
+            return;
+        }
+        if(head[1]!=85){
+            return;
+        }
+        if(head[2]!=-86){
+            return;
+        }
+        if(head[3]!=86){
+            return;
+        }
         final byte[] hexbuffer=hex.clone();
         runOnUiThread(new Runnable() {
             @Override
@@ -254,6 +267,7 @@ public class MainActivity extends AppCompatActivity implements InitCH340.IUsbPer
                     float[] floatArray= new float[length/4];
                     hex2Float(floatArray,hexbuffer,length);
                     recvText.setText(Arrays.toString(floatArray));
+                    data0.setText(""+headerString);
                     data1.setText(""+floatArray[1]);
                     data2.setText(""+floatArray[2]);
                     data3.setText(""+floatArray[3]);

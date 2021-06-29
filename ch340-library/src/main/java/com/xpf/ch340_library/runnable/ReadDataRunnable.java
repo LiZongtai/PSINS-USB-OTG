@@ -31,9 +31,9 @@ public class ReadDataRunnable implements Runnable {
      */
     private void startReadThread() {
         while (!mStop) {
-            byte[] receiveBuffer = new byte[140];// 接收数据数组
+            byte[] receiveBuffer = new byte[300];// 接收数据数组
             // 读取缓存区的数据长度
-            int length = InitCH340.getDriver().ReadData(receiveBuffer, 140);
+            int length = InitCH340.getDriver().ReadData(receiveBuffer, 300);
 
             switch (length) {
                 case 0: // 无数据
@@ -46,14 +46,13 @@ public class ReadDataRunnable implements Runnable {
                     if (listener != null) {
 //                        listener.onReadStr(hexString);
 //                        byte[] buffer=receiveBuffer.clone();
-                        listener.onReadHex(receiveBuffer,length);
+                        listener.onReadHex(receiveBuffer,300);
                     }
 //                    LogUtils.i(TAG, "ReadHexString===" + hexString + ",length===" + length);
                     break;
             }
-            receiveBuffer = new byte[140];
             try {
-                Thread.sleep(5);
+                Thread.sleep(20);
 
             } catch (InterruptedException e) {
                 e.printStackTrace();

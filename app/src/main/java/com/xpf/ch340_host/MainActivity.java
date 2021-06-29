@@ -37,7 +37,6 @@ public class MainActivity extends AppCompatActivity implements InitCH340.IUsbPer
     private EditText etContent;
     private TextView recvText;
     private static final String ACTION_USB_PERMISSION = "com.linc.USB_PERMISSION";
-    private byte[] readBuffer;
 
     private TextView data0;
     private TextView data1;
@@ -229,77 +228,98 @@ public class MainActivity extends AppCompatActivity implements InitCH340.IUsbPer
 //    }
 
     @Override
-    public void onReadHex(byte[] hex, final int length) {
-        final byte[] head=new byte[4];
-        head[0]=hex[0];
-        head[1]=hex[1];
-        head[2]=hex[2];
-        head[3]=hex[3];
-        final String headerString = CH340Util.bytesToHexString(head, 4);
-//        final String checkhead="aa55aa45";
-
-        if(length!=140) {
-            return;
-        }
-        if(head[0]!=-86){
-            return;
-        }
-        if(head[1]!=85){
-            return;
-        }
-        if(head[2]!=-86){
-            return;
-        }
-        if(head[3]!=86){
-            return;
-        }
-        final byte[] hexbuffer=hex.clone();
-        runOnUiThread(new Runnable() {
+    public void onReadHex(final byte[] recv, final int length) {
+        new Thread(new Runnable() {
             @Override
             public void run() {
-//                                data1.setText(hexString);
+                byte[] recvBuffer=recv.clone();
+                int read_len=44;
+                if(length<= read_len+4) {
+                    return;
+                }
+                final byte[] readBuffer=new byte[read_len];
+                int startRead=-1;
+                for(int i=0;i<length-read_len;i++){
+                    //aa 55 aa 56 --> -86 85 -86  86
+                    if(recvBuffer[i]==-86 && recvBuffer[i+1]==85 && recvBuffer[i+2]==-86 && recvBuffer[i+3]==86){
+                        startRead=i;
+                        break;
+                    }
+                }
+                if(startRead==-1){
+                    //error data
+                    return;
+                }
+                System.arraycopy(recvBuffer, startRead, readBuffer,0 , read_len);
+
+                final byte[] head=new byte[4];
+                head[0]=readBuffer[0];
+                head[1]=readBuffer[1];
+                head[2]=readBuffer[2];
+                head[3]=readBuffer[3];
+                final String headerString = CH340Util.bytesToHexString(head, 4);
+
 
                 if(!isFloat){
-                    String hexString = CH340Util.bytesToHexString(hexbuffer, length);
-                    recvText.setText(hexString);
+                    final String hexString = CH340Util.bytesToHexString(readBuffer, read_len);
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            recvText.setText(hexString);
+                        }
+                    });
+
                 }
                 if(isFloat){
-                    float[] floatArray= new float[length/4];
-                    hex2Float(floatArray,hexbuffer,length);
-                    recvText.setText(Arrays.toString(floatArray));
-                    data0.setText(""+headerString);
-                    data1.setText(""+floatArray[1]);
-                    data2.setText(""+floatArray[2]);
-                    data3.setText(""+floatArray[3]);
-                    data4.setText(""+floatArray[4]);
-                    data5.setText(""+floatArray[5]);
-                    data6.setText(""+floatArray[6]);
-                    data7.setText(""+floatArray[7]);
-                    data8.setText(""+floatArray[8]);
-                    data9.setText(""+floatArray[9]);
-                    data10.setText(""+floatArray[10]);
-                    data11.setText(""+floatArray[11]);
-                    data12.setText(""+floatArray[12]);
-                    data13.setText(""+floatArray[13]);
-                    data14.setText(""+floatArray[14]);
-                    data15.setText(""+floatArray[15]);
-                    data16.setText(""+floatArray[16]);
-                    data17.setText(""+floatArray[17]);
-                    data18.setText(""+(floatArray[18]+floatArray[19]));
-                    data19.setText(""+(floatArray[20]+floatArray[21]));
-                    data20.setText(""+floatArray[23]);
-                    data21.setText(""+floatArray[24]);
-                    data22.setText(""+floatArray[25]);
-                    data23.setText(""+(floatArray[26]+floatArray[27]));
-                    data24.setText(""+(floatArray[28]+floatArray[29]));
-                    data25.setText(""+floatArray[31]);
-                    data26.setText(""+floatArray[32]);
-                    data27.setText(""+floatArray[33]);
-                    data28.setText(""+System.currentTimeMillis());
-                }
+                    final float[] floatArray= new float[read_len/4];
+                    hex2Float(floatArray,readBuffer,read_len);
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            recvText.setText(Arrays.toString(floatArray));
+//                            data0.setText(""+headerString);
+//                            data1.setText(""+floatArray[1]);
+//                            data2.setText(""+floatArray[2]);
+//                            data3.setText(""+floatArray[3]);
+//                            data4.setText(""+floatArray[4]);
+//                            data5.setText(""+floatArray[5]);
+//                            data6.setText(""+floatArray[6]);
+//                            data7.setText(""+floatArray[7]);
+//                            data8.setText(""+floatArray[8]);
+//                            data9.setText(""+floatArray[9]);
+//                            data10.setText(""+floatArray[10]);
+//                            data11.setText(""+floatArray[11]);
+//                            data12.setText(""+floatArray[12]);
+//                            data13.setText(""+floatArray[13]);
+//                            data14.setText(""+floatArray[14]);
+//                            data15.setText(""+floatArray[15]);
+//                            data16.setText(""+floatArray[16]);
+//                            data17.setText(""+floatArray[17]);
+//                            data18.setText(""+(floatArray[18]+floatArray[19]));
+//                            data19.setText(""+(floatArray[20]+floatArray[21]));
+//                            data20.setText(""+floatArray[23]);
+//                            data21.setText(""+floatArray[24]);
+//                            data22.setText(""+floatArray[25]);
+//                            data23.setText(""+(floatArray[26]+floatArray[27]));
+//                            data24.setText(""+(floatArray[28]+floatArray[29]));
+//                            data25.setText(""+floatArray[31]);
+//                            data26.setText(""+floatArray[32]);
+//                            data27.setText(""+floatArray[33]);
+//                            data28.setText(""+System.currentTimeMillis());
+                            data0.setText("" + headerString);     //head
+                            data1.setText("" + floatArray[1]);    //timestamp
+                            data12.setText("" + floatArray[2]);  //Pitch
+                            data13.setText("" + floatArray[3]);  //Roll
+                            data14.setText("" + floatArray[4]);  //Yaw
+                            data18.setText("" + (floatArray[5] + floatArray[6])); //Lon
+                            data19.setText("" + (floatArray[7] + floatArray[8])); //Lat
+                            data28.setText("" + System.currentTimeMillis());  //Android System Time
+                        }
+                    });
 
+                }
             }
-        });
+        }).start();
     }
 
     private void hex2Float(float[] floats,byte[] bytes,int length) {
